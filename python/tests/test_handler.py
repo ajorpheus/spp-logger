@@ -2,8 +2,8 @@ import json
 import logging
 from uuid import uuid4
 
-import immutables
 import pytest
+from cawdrey import frozendict
 from freezegun import freeze_time
 from helpers import is_json, is_valid_uuid, parse_log_lines
 
@@ -72,11 +72,11 @@ def test_get_timestamp(spp_handler, log_record):
 def test_context_is_immutable(default_handler_config, log_stream):
     log_handler = SPPHandler(
         config=default_handler_config,
-        context=immutables.Map(
-            log_correlation_id=str(uuid4()),
-            log_correlation_type="AUTO",
-            log_level=logging.WARNING,
-        ),
+        context=frozendict({
+            "log_correlation_id":str(uuid4()),
+            "log_correlation_type":"AUTO",
+            "log_level":logging.WARNING,
+        }),
         stream=log_stream,
     )
     assert log_handler.context["log_level"] == "WARNING"
@@ -84,25 +84,25 @@ def test_context_is_immutable(default_handler_config, log_stream):
         log_handler.context["log_level"] = "foobar"
     assert (
         str(err.value)
-        == "'immutables._map.Map' object does not support item assignment"
+        == "'frozendict' object does not support item assignment"
     )
 
 
 def test_context_can_be_overridden(logger, spp_handler, log_stream):
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id="test",
-            log_correlation_type="AUTO",
-            log_level=logging.DEBUG,
-        )
+        frozendict({
+            "log_correlation_id":"test",
+            "log_correlation_type":"AUTO",
+            "log_level":logging.DEBUG,
+        })
     )
     logger.info("my first log message")
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id="other test",
-            log_correlation_type="AUTO",
-            log_level=logging.INFO,
-        )
+        frozendict({
+            "log_correlation_id":"other test",
+            "log_correlation_type":"AUTO",
+            "log_level":logging.INFO,
+        })
     )
     logger.info("my second log message")
     log_messages = parse_log_lines(log_stream.getvalue())
@@ -132,11 +132,11 @@ def test_set_context_attribute_update(spp_handler):
 
 def test_log_level_set_by_context(spp_handler, log_stream):
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id="TEST",
-            log_correlation_type="AUTO",
-            log_level=logging.ERROR,
-        )
+        frozendict({
+            "log_correlation_id":"TEST",
+            "log_correlation_type":"AUTO",
+            "log_level":logging.ERROR,
+        })
     )
     logger = logging.getLogger("test_log_level_set_by_context")
     logger.addHandler(spp_handler)
@@ -163,7 +163,7 @@ def test_context_must_be_immutable(default_handler_config):
                 log_level=logging.WARNING,
             ),
         )
-    assert str(err.value) == "Context must be a type of 'immutables.Map'"
+    assert str(err.value) == "Context must be a type of 'frozendict'"
 
 
 def test_context_must_be_immutable_when_overridden(spp_handler):
@@ -175,12 +175,12 @@ def test_context_must_be_immutable_when_overridden(spp_handler):
                 log_level=logging.WARNING,
             )
         )
-    assert str(err.value) == "Context must be a type of 'immutables.Map'"
+    assert str(err.value) == "Context must be a type of 'frozendict'"
 
 
 def test_context_has_required_attributes(spp_handler):
     with pytest.raises(ContextError) as err:
-        spp_handler.set_context(immutables.Map(my_var="test"))
+        spp_handler.set_context(frozendict({"my_var":"test"}))
     assert (
         str(err.value)
         == "Context must contain required arguments: "
@@ -191,20 +191,20 @@ def test_context_has_required_attributes(spp_handler):
 
 def test_context_can_be_temporarily_overridden(logger, spp_handler, log_stream):
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id="default_correlation_id",
-            log_correlation_type="AUTO",
-            log_level=logging.INFO,
-        )
+        frozendict({
+            "log_correlation_id":"default_correlation_id",
+            "log_correlation_type":"AUTO",
+            "log_level":logging.INFO,
+        })
     )
     logger.info("my info log message")
     logger.debug("a debug message")
     with spp_handler.override_context(
-        immutables.Map(
-            log_correlation_id="override_correlation_id",
-            log_correlation_type="AUTO",
-            log_level=logging.DEBUG,
-        )
+        frozendict({
+            "log_correlation_id":"override_correlation_id",
+            "log_correlation_type":"AUTO",
+            "log_level":logging.DEBUG,
+        })
     ):
         logger.debug("my overridden debug")
     log_messages = parse_log_lines(log_stream.getvalue())
@@ -227,18 +227,18 @@ def test_log_level_int(spp_handler):
 
 def test_context_log_level_is_always_string(spp_handler):
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id=str(uuid4()),
-            log_correlation_type="AUTO",
-            log_level=logging.WARNING,
-        )
+        frozendict({
+            "log_correlation_id":str(uuid4()),
+            "log_correlation_type":"AUTO",
+            "log_level":logging.WARNING,
+        })
     )
     assert spp_handler.context["log_level"] == "WARNING"
     spp_handler.set_context(
-        immutables.Map(
-            log_correlation_id=str(uuid4()),
-            log_correlation_type="AUTO",
-            log_level="INFO",
-        )
+        frozendict({
+            "log_correlation_id":str(uuid4()),
+            "log_correlation_type":"AUTO",
+            "log_level":"INFO",
+        })
     )
     assert spp_handler.context["log_level"] == "INFO"

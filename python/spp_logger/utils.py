@@ -1,9 +1,8 @@
 from typing import Optional
 
-import immutables
+from cawdrey import frozendict
 
-
-def context_to_dict(context: immutables.Map) -> dict:
+def context_to_dict(context: frozendict) -> dict:
     keys = [key for key in context.keys()]
     context_dict = {}
     for key in sorted(keys):
@@ -11,7 +10,7 @@ def context_to_dict(context: immutables.Map) -> dict:
     return context_dict
 
 
-def dict_to_context(context_dict: Optional[dict]) -> Optional[immutables.Map]:
+def dict_to_context(context_dict: Optional[dict]) -> Optional[frozendict]:
     if not context_dict:
         return None
-    return immutables.Map(**context_dict)
+    return frozendict(**context_dict)

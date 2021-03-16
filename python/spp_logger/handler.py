@@ -9,7 +9,7 @@ from types import TracebackType
 from typing import IO, Iterator, Optional, Tuple, Union
 from uuid import uuid4
 
-import immutables
+from cawdrey import frozendict
 import pytz as pytz
 
 from .config import SPPLoggerConfig
@@ -21,18 +21,18 @@ class SPPHandler(logging.StreamHandler):
     def __init__(
         self,
         config: SPPLoggerConfig,
-        context: immutables.Map = None,
+        context: frozendict = None,
         log_level: Union[int, str] = logging.INFO,
         stream: IO = sys.stdout,
     ) -> None:
         self.config = config
         super().__init__(stream=stream)
         if context is None:
-            context = immutables.Map(
-                log_correlation_id=str(uuid4()),
-                log_correlation_type="AUTO",
-                log_level=self.log_level_int(log_level),
-            )
+            context = frozendict({
+                "log_correlation_id":str(uuid4()),
+                "log_correlation_type":"AUTO",
+                "log_level":self.log_level_int(log_level),
+            })
         self._context = self.set_context(context)
         self.level = self._context.get("log_level")
 
@@ -104,32 +104,33 @@ class SPPHandler(logging.StreamHandler):
         tz = pytz.timezone(self.config.timezone)
         return datetime.fromtimestamp(record.created, tz).isoformat()
 
+    # set_context_attribute(attribute_name="hello", attribute_value="55")
     def set_context_attribute(self, attribute_name: str, attribute_value: str) -> None:
         if attribute_name in self._context:
             raise ImmutableContextError.attribute_error(attribute_name)
-        self._context = self._context.set(attribute_name, attribute_value)
+        self._context = self._context + {attribute_name: attribute_value}
 
     @property
-    def context(self) -> immutables.Map:
-        return self._context.set(
-            "log_level", self.format_log_level(self._context["log_level"])
+    def context(self) -> frozendict:
+        return self._context.copy(
+            log_level = self.format_log_level(self._context["log_level"])
         )
 
-    def set_context(self, context: immutables.Map) -> immutables.Map:
-        if type(context) is not immutables.Map:
-            raise ImmutableContextError("Context must be a type of 'immutables.Map'")
+    def set_context(self, context: frozendict) -> frozendict:
+        if type(context) is not frozendict:
+            raise ImmutableContextError("Context must be a type of 'frozendict'")
         if not all(key in context for key in CONTEXT_REQUIRED_FIELDS):
             raise ContextError(
                 "Context must contain required arguments: "
                 + ", ".join(CONTEXT_REQUIRED_FIELDS)
             )
-        context = context.set("log_level", self.log_level_int(context["log_level"]))
+        context = context.copy(log_level = self.log_level_int(context["log_level"]))
         self._context = context
         self.level = self._context.get("log_level")
         return self._context
 
     @contextmanager
-    def override_context(self, context: immutables.Map) -> Iterator[None]:
+    def override_context(self, context: frozendict) -> Iterator[None]:
         main_context = self._context
         try:
             self.set_context(context)

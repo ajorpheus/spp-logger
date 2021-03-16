@@ -3,29 +3,29 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
-import immutables
+from cawdrey import frozendict
 
 MAIN_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(MAIN_DIR))
 
 from spp_logger import SPPLogger, SPPLoggerConfig  # noqa: E402
 
-main_context = immutables.Map(
-    log_correlation_id=str(uuid4()), log_correlation_type="AUTO", log_level=logging.INFO
-)
+main_context = frozendict({
+    "log_correlation_id":str(uuid4()), "log_correlation_type":"AUTO", "log_level":logging.INFO
+})
 
-secondary_context = immutables.Map(
-    log_correlation_id=str(uuid4()),
-    log_correlation_type="AUTO",
-    log_level=logging.DEBUG,
-)
+secondary_context = frozendict({
+    "log_correlation_id":str(uuid4()),
+    "log_correlation_type":"AUTO",
+    "log_level":logging.DEBUG,
+})
 
 config = SPPLoggerConfig(
     service="test-service",
     component="test-component",
     environment="dev",
     deployment="test-deployment",
-    user="test-user",
+    # user="test-user",
 )
 
 # Stream is configurable as any IO, it defaults to stdout

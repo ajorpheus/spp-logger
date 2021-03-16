@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from types import TracebackType
 from typing import IO, Any, Iterator, Mapping, Optional, Tuple, Union
 
-import immutables
+from cawdrey import frozendict
 
 from .config import SPPLoggerConfig
 from .handler import SPPHandler
@@ -16,7 +16,7 @@ class SPPLogger(logging.Logger):
         config: SPPLoggerConfig,
         name: str = "spp-logger",
         log_level: Union[int, str] = logging.INFO,
-        context: immutables.Map = None,
+        context: frozendict = None,
         stream: IO = sys.stdout,
     ) -> None:
         super().__init__(name, logging.DEBUG)
@@ -32,7 +32,7 @@ class SPPLogger(logging.Logger):
     def set_context_attribute(self, attribute_name: str, attribute_value: str) -> None:
         self.spp_handler.set_context_attribute(attribute_name, attribute_value)
 
-    def set_context(self, context: immutables.Map) -> immutables.Map:
+    def set_context(self, context: frozendict) -> frozendict:
         return self.spp_handler.set_context(context)
 
     def makeRecord(
@@ -59,11 +59,11 @@ class SPPLogger(logging.Logger):
         return record
 
     @property
-    def context(self) -> immutables.Map:
+    def context(self) -> frozendict:
         return self.spp_handler.context
 
     @contextmanager
-    def override_context(self, context: immutables.Map) -> Iterator[None]:
+    def override_context(self, context: frozendict) -> Iterator[None]:
         main_context = self.context
         try:
             self.set_context(context)
