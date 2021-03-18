@@ -40,6 +40,7 @@ print(f"Starting logger with context: {main_context}\n")
 logger.debug("This debug message should not be visible")
 logger.info("Got to love an info message")
 logger.warning("But be careful, there be dragons!")
+logger.critical("This warning has reached critical level!!")
 
 with logger.override_context(secondary_context):
     logger.debug("In this context i can print debugs!")

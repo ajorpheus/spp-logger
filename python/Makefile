@@ -28,3 +28,6 @@ test:
 ## Run unit test coverage check
 coverage:
 	@poetry run coverage run -m pytest
+
+example:
+	@poetry run python examples/example.py
