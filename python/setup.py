@@ -19,6 +19,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "pytz>=2020.4",
+        "cawdrey>=0.4.2"
     ],
     test_suite="tests",
     classifiers=[
